@@ -29,7 +29,6 @@ namespace Cdm.iOS.Talk
                 _deviceWatcher.deviceRemoved -= DeviceWatcher_OnDeviceRemoved;
                 _deviceWatcher.devicePaired -= DeviceWatcher_OnDevicePaired;
                 _deviceWatcher.SetEnabled(false);
-                _deviceWatcher.Dispose();
             }
         }
 

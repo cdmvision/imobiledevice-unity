@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Cdm.iOS.Talk
 {
-    public class DeviceWatcher : IDisposable
+    public class DeviceWatcher 
     {
         private const string Label = "Cdm.iOS.Talk.DeviceWatcher";
         
@@ -45,7 +45,6 @@ namespace Cdm.iOS.Talk
             }
         }
         
-
         private void Start()
         {
             if (isEnabled)
@@ -84,6 +83,7 @@ namespace Cdm.iOS.Talk
                 _gameObjectEventTrigger = null;
             }
 
+            _deviceEventCallback = null;
             isEnabled = false;
             LibiMobileDevice.Instance.iDevice.idevice_event_unsubscribe().ThrowOnError();
         }
@@ -170,13 +170,7 @@ namespace Cdm.iOS.Talk
                 lockdownClientHandle?.Dispose();
             }
         }
-        
-        public void Dispose()
-        {
-            SetEnabled(false);
-            _deviceEventCallback = null;
-        }
-        
+
         protected virtual void OnDeviceAdded(DeviceEventArgs e)
         {
             deviceAdded?.Invoke(e);
