@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Cdm.iOS.Talk;
 using TMPro;
 using UnityEngine;
@@ -11,9 +12,14 @@ public class DeviceScript : MonoBehaviour
     public RawImage image;
     public TMP_Text deviceInfoText;
 
-#if UNITY_IOS || UNITY_EDITOR
+#if UNITY_IOS //|| UNITY_EDITOR
     private Texture2D _texture;
-    private IDeviceSocket _deviceSocket;
+    
+    private int _textureWidth;
+    private int _textureHeight;
+    private int _textureFormat;
+    private byte[] _textureData;
+    private bool _isTextureReceived = false;
     
     private void Start()
     {
@@ -21,53 +27,70 @@ public class DeviceScript : MonoBehaviour
 
         Task.Run(AcceptSocket);
     }
-    
+
+    private void Update()
+    {
+        if (_isTextureReceived)
+        {
+            _texture = new Texture2D(_textureWidth, _textureHeight, (TextureFormat)_textureFormat, false);
+            _texture.LoadRawTextureData(_textureData);
+            _texture.Apply();
+
+            image.gameObject.SetActive(true);
+            image.texture = _texture;
+            _isTextureReceived = false;
+        }
+    }
+
     private void OnDestroy()
     {
-        _deviceSocket?.Disconnect();
-        _deviceSocket?.Dispose();
+        if (_texture != null)
+            DestroyImmediate(_texture);
     }
 
     private void AcceptSocket()
     {
-        Debug.Log($"Waiting for incoming connection...");
-        _deviceSocket = new DeviceSocket();
-        _deviceSocket.Connect(Port);
-        //deviceInfoText.text = "Connected!";
-        Debug.Log($"Connected to host!");
-
-        if (_deviceSocket.Receive(out int width) &&
-            _deviceSocket.Receive(out int height) &&
-            _deviceSocket.Receive(out int format) &&
-            _deviceSocket.Receive(out int length))
+        IDeviceSocket deviceSocket = null;
+        
+        try
         {
-            Debug.Log($"Received texture info: {width}x{height} {(TextureFormat) format}");
-            
-            var textureData = new byte[length];
-            if (_deviceSocket.Receive(textureData, textureData.Length) == textureData.Length)
+            Debug.Log($"Waiting for incoming connection...");
+            deviceSocket = new DeviceSocket();
+            deviceSocket.Connect(Port);
+            Debug.Log($"Connected to host!");
+
+            if (deviceSocket.Receive(out int width) &&
+                deviceSocket.Receive(out int height) &&
+                deviceSocket.Receive(out int format) &&
+                deviceSocket.Receive(out int length))
             {
-                Debug.Log($"Received texture data: {length} bytes");
-                
-                if (_texture != null)
+                Debug.Log($"Received texture info: {width}x{height} {(TextureFormat) format}");
+            
+                _textureData = new byte[length];
+                if (deviceSocket.Receive(_textureData, _textureData.Length) == _textureData.Length)
                 {
-                    DestroyImmediate(_texture);
-                    _texture = null;
+                    Debug.Log($"Received texture data: {length} bytes");
+                    
+                    _textureWidth = width;
+                    _textureHeight = height;
+                    _textureFormat = format;
+                    _isTextureReceived = true;
+                    return;
                 }
-
-                _texture = new Texture2D(width, height, (TextureFormat)format, false);
-                _texture.LoadRawTextureData(textureData);
-                _texture.Apply();
-
-                image.gameObject.SetActive(true);
-                image.texture = _texture;
-                return;
             }
+        
+            Debug.LogError($"Texture could not be received!");
         }
-        
-        Debug.LogError($"Texture could not be received!");
-        
-        _deviceSocket.Disconnect();
-        _deviceSocket.Dispose();
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+            throw;
+        }
+        finally
+        {
+            deviceSocket?.Disconnect();
+            deviceSocket?.Dispose();
+        }
     }
 #endif
 }

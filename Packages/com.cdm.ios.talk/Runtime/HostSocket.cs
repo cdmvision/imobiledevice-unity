@@ -1,6 +1,7 @@
 ﻿using System;
 using iMobileDevice;
 using iMobileDevice.iDevice;
+using UnityEngine;
 
 namespace Cdm.iOS.Talk
 {
@@ -69,7 +70,7 @@ namespace Cdm.iOS.Talk
         {
             var deviceApi = LibiMobileDevice.Instance.iDevice;
 
-            var sentBytes = 0u;
+            uint sentBytes = 0;
             deviceApi.idevice_connection_send(_connectionHandle, buffer, (uint) size, ref sentBytes).ThrowOnError();
             return (int) sentBytes;
         }
@@ -85,7 +86,7 @@ namespace Cdm.iOS.Talk
         {
             var deviceApi = LibiMobileDevice.Instance.iDevice;
             
-            var receivedBytes = 0u;
+            uint receivedBytes = 0;
             deviceApi.idevice_connection_receive(_connectionHandle, buffer, (uint) size, ref receivedBytes);
             return (int) receivedBytes;
         }

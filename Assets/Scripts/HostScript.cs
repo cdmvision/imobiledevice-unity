@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using TMPro;
@@ -12,6 +13,10 @@ public class HostScript : MonoBehaviour
 
 #if UNITY_EDITOR || UNITY_STANDALONE
     private DeviceWatcher _deviceWatcher;
+    private int _textureWidth;
+    private int _textureHeight;
+    private int _textureFormat;
+    private byte[] _textureData;
 
     private void Start()
     {
@@ -40,31 +45,42 @@ public class HostScript : MonoBehaviour
         
         deviceInfoText.text = $"{deviceInfoText.name} [{e.deviceInfo.udid}] [{e.deviceInfo.connectionType}]";
 
+        _textureWidth = textureToSend.width;
+        _textureHeight = textureToSend.height;
+        _textureFormat = (int)textureToSend.format;
+        _textureData = textureToSend.GetRawTextureData();
+        
         Task.Run(() => SendTexture(e.deviceInfo));
     }
 
     private void SendTexture(DeviceInfo deviceInfo)
     {
-        using var deviceSocket = new HostSocket(deviceInfo);
-        deviceSocket.Connect(DeviceScript.Port);
-        Debug.Log($"Device connected with port {DeviceScript.Port}");
-        
-        // Send texture width, height and format.
-        if (deviceSocket.Send(textureToSend.width) &&
-            deviceSocket.Send(textureToSend.height) &&
-            deviceSocket.Send((int)textureToSend.format))
+        try
         {
-            // Send data length then the data itself.
-            var data = textureToSend.GetRawTextureData();
-            if (deviceSocket.Send(data.Length) &&
-                deviceSocket.Send(data, data.Length) == data.Length)
-            {
-                Debug.Log("Texture has been sent!");
-                return;
-            }
-        }
+            using var deviceSocket = new HostSocket(deviceInfo);
+            deviceSocket.Connect(DeviceScript.Port);
+            Debug.Log($"Device connected with port {DeviceScript.Port}");
         
-        Debug.LogError("Texture could not be sent!");
+            // Send texture width, height and format.
+            if (deviceSocket.Send(_textureWidth) &&
+                deviceSocket.Send(_textureHeight) &&
+                deviceSocket.Send(_textureFormat))
+            {
+                // Send data length then the data itself.
+                if (deviceSocket.Send(_textureData.Length) &&
+                    deviceSocket.Send(_textureData, _textureData.Length) == _textureData.Length)
+                {
+                    Debug.Log("Texture has been sent!");
+                    return;
+                }
+            }
+        
+            Debug.LogError("Texture could not be sent!");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+        }
     }
 
     private void DeviceWatcher_OnDeviceRemoved(DeviceEventArgs e)
