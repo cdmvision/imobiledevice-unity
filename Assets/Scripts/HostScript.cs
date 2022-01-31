@@ -1,22 +1,29 @@
-using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using Cdm.iOS.Talk;
+using UnityEngine.UI;
 using Debug = UnityEngine.Debug;
 
 public class HostScript : MonoBehaviour
 {
-    public TMP_Text deviceInfoText;
     public Texture2D textureToSend;
+    public RawImage image;
+    public TMP_Text deviceInfoText;
 
-#if UNITY_EDITOR || UNITY_STANDALONE
     private DeviceWatcher _deviceWatcher;
-    private int _textureWidth;
-    private int _textureHeight;
-    private int _textureFormat;
-    private byte[] _textureData;
+
+    private void OnEnable()
+    {
+        if (Application.platform != RuntimePlatform.WindowsEditor &&
+            Application.platform != RuntimePlatform.WindowsPlayer &&
+            Application.platform != RuntimePlatform.LinuxEditor &&
+            Application.platform != RuntimePlatform.LinuxPlayer &&
+            Application.platform != RuntimePlatform.OSXEditor &&
+            Application.platform != RuntimePlatform.OSXPlayer)
+        {
+            enabled = false;
+        }
+    }
 
     private void Start()
     {
@@ -39,49 +46,42 @@ public class HostScript : MonoBehaviour
         }
     }
 
-    private void DeviceWatcher_OnDeviceAdded(DeviceEventArgs e)
+    private async void DeviceWatcher_OnDeviceAdded(DeviceEventArgs e)
     {
         Debug.Log($"Device added: {deviceInfoText.name} [{e.deviceInfo.udid}] [{e.deviceInfo.connectionType}]");
         
         deviceInfoText.text = $"{deviceInfoText.name} [{e.deviceInfo.udid}] [{e.deviceInfo.connectionType}]";
 
-        _textureWidth = textureToSend.width;
-        _textureHeight = textureToSend.height;
-        _textureFormat = (int)textureToSend.format;
-        _textureData = textureToSend.GetRawTextureData();
+        Debug.Log($"Trying to connect to the device on port {SocketTextureUtility.Port}...");
+        using var socket = new HostSocket(e.deviceInfo);
+        await socket.ConnectAsync(SocketTextureUtility.Port);
+        Debug.Log($"Connection has been established!");
         
-        Task.Run(() => SendTexture(e.deviceInfo));
-    }
-
-    private void SendTexture(DeviceInfo deviceInfo)
-    {
-        try
+        var success = await SocketTextureUtility.SendAsync(socket, textureToSend);
+        if (success)
         {
-            using var deviceSocket = new HostSocket(deviceInfo);
-            deviceSocket.Connect(DeviceScript.Port);
-            Debug.Log($"Device connected with port {DeviceScript.Port}");
-
-            Debug.Log($"Sending texture info: {_textureWidth}x{_textureHeight} {(TextureFormat) _textureFormat} with {_textureData.Length} bytes");
-            if (deviceSocket.Send(_textureWidth) &&
-                deviceSocket.Send(_textureHeight) &&
-                deviceSocket.Send(_textureFormat) &&
-                deviceSocket.Send(_textureData.Length))
-            {
-                Debug.Log($"Sending texture data with {_textureData.Length} bytes...");
-                
-                if (deviceSocket.Send(_textureData, _textureData.Length) == _textureData.Length)
-                {
-                    Debug.Log("Texture has been sent!");
-                    return;
-                }
-            }
+            Debug.Log("Texture has been sent!");
+        }
+        else
+        {
+            Debug.LogWarning("Texture could not be sent!");
+        }
         
-            Debug.LogError("Texture could not be sent!");
-        }
-        catch (Exception e)
+        var texture = await SocketTextureUtility.ReceiveAsync(socket);
+        if (texture != null)
         {
-            Debug.LogError(e);
+            Debug.Log("Texture has been received!");
+            
+            image.gameObject.SetActive(true);
+            image.texture = texture;
         }
+        else
+        {
+            Debug.Log("Texture could not be received.");   
+        }
+        
+        socket.Disconnect();
+        socket.Dispose();
     }
 
     private void DeviceWatcher_OnDeviceRemoved(DeviceEventArgs e)
@@ -96,5 +96,4 @@ public class HostScript : MonoBehaviour
         Debug.Log($"Device paired: {deviceInfoText.name} [{e.deviceInfo.udid}] [{e.deviceInfo.connectionType}]");
         deviceInfoText.text = $"{deviceInfoText.name} [{e.deviceInfo.udid}] [{e.deviceInfo.connectionType}] [Paired]";
     }
-#endif
 }
