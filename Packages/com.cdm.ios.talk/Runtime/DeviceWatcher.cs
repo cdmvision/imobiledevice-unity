@@ -144,16 +144,16 @@ namespace Cdm.iOS.Talk
 
             try
             {
-                var idevice = LibiMobileDevice.Instance.iDevice;
-                var lockdown = LibiMobileDevice.Instance.Lockdown;
+                var deviceApi = LibiMobileDevice.Instance.iDevice;
+                var lockdownApi = LibiMobileDevice.Instance.Lockdown;
 
-                idevice.idevice_new(out deviceHandle, deviceInfo.udid)
+                deviceApi.idevice_new(out deviceHandle, deviceInfo.udid)
                     .ThrowOnError();
 
-                lockdown.lockdownd_client_new_with_handshake(deviceHandle, out lockdownClientHandle, Label)
+                lockdownApi.lockdownd_client_new_with_handshake(deviceHandle, out lockdownClientHandle, Label)
                     .ThrowOnError();
 
-                lockdown.lockdownd_get_device_name(lockdownClientHandle, out var deviceName)
+                lockdownApi.lockdownd_get_device_name(lockdownClientHandle, out var deviceName)
                     .ThrowOnError();
 
                 deviceInfo = new DeviceInfo(deviceInfo.udid, deviceName, deviceInfo.connectionType);
