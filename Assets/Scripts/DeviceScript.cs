@@ -12,7 +12,7 @@ public class DeviceScript : MonoBehaviour
     public RawImage image;
     public TMP_Text deviceInfoText;
 
-#if UNITY_IOS //|| UNITY_EDITOR
+#if UNITY_IOS || UNITY_EDITOR
     private Texture2D _texture;
     
     private int _textureWidth;
@@ -64,7 +64,7 @@ public class DeviceScript : MonoBehaviour
                 deviceSocket.Receive(out int format) &&
                 deviceSocket.Receive(out int length))
             {
-                Debug.Log($"Received texture info: {width}x{height} {(TextureFormat) format}");
+                Debug.Log($"Received texture info: {width}x{height} {(TextureFormat) format} with {length} bytes");
             
                 _textureData = new byte[length];
                 if (deviceSocket.Receive(_textureData, _textureData.Length) == _textureData.Length)
