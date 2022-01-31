@@ -30,18 +30,24 @@ public class DeviceScript : MonoBehaviour
 
     private void AcceptSocket()
     {
+        Debug.Log($"Waiting for incoming connection...");
         _deviceSocket = new DeviceSocket();
         _deviceSocket.Connect(Port);
         deviceInfoText.text = "Connected!";
+        Debug.Log($"Connected to host!");
 
         if (_deviceSocket.Receive(out int width) &&
             _deviceSocket.Receive(out int height) &&
             _deviceSocket.Receive(out int format) &&
             _deviceSocket.Receive(out int length))
         {
+            Debug.Log($"Received texture info: {width}x{height} {(TextureFormat) format}");
+            
             var textureData = new byte[length];
             if (_deviceSocket.Receive(textureData, textureData.Length) == textureData.Length)
             {
+                Debug.Log($"Received texture data: {length} bytes");
+                
                 if (_texture != null)
                 {
                     DestroyImmediate(_texture);
@@ -54,8 +60,11 @@ public class DeviceScript : MonoBehaviour
 
                 image.gameObject.SetActive(true);
                 image.texture = _texture;
+                return;
             }
         }
+        
+        Debug.LogError($"Texture could not be received!");
 
         if (_texture == null)
         {
