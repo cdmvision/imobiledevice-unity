@@ -39,6 +39,9 @@ public class DeviceScript : MonoBehaviour
             Debug.Log("Texture could not be received.");   
         }
         
+        Debug.Log($"Sending ACK...");
+        await socket.SendInt32Async(1);
+        
         var success = await SocketTextureUtility.SendAsync(socket, textureToSend);
         if (success)
         {
@@ -49,6 +52,11 @@ public class DeviceScript : MonoBehaviour
             Debug.LogWarning("Texture could not be sent!");
         }
         
+        Debug.Log($"Waiting for ACK...");
+        var ack = await socket.ReceiveInt32Async();
+        Debug.Log($"Received  ACK: {(ack.HasValue ? "YES" : "NO")}");
+        Debug.Log($"DONE!");
+
         socket.Disconnect();
         socket.Dispose();
     }

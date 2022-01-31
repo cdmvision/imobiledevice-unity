@@ -67,6 +67,11 @@ public class HostScript : MonoBehaviour
             Debug.LogWarning("Texture could not be sent!");
         }
         
+        Debug.Log($"Waiting for ACK...");
+        var ack = await socket.ReceiveInt32Async();
+        Debug.Log($"Received  ACK: {(ack.HasValue ? "YES" : "NO")}");
+        
+        Debug.Log($"Receiving texture info...");
         var texture = await SocketTextureUtility.ReceiveAsync(socket);
         if (texture != null)
         {
@@ -79,6 +84,10 @@ public class HostScript : MonoBehaviour
         {
             Debug.Log("Texture could not be received.");   
         }
+        
+        Debug.Log($"Sending ACK...");
+        await socket.SendInt32Async(1);
+        Debug.Log($"DONE!");
         
         socket.Disconnect();
         socket.Dispose();

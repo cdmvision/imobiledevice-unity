@@ -87,7 +87,7 @@ namespace Cdm.iOS.Talk
             var deviceApi = LibiMobileDevice.Instance.iDevice;
             
             uint receivedBytes = 0;
-            deviceApi.idevice_connection_receive(_connectionHandle, buffer, (uint) size, ref receivedBytes);
+            deviceApi.idevice_connection_receive(_connectionHandle, buffer, (uint) size, ref receivedBytes).ThrowOnError();
             return (int) receivedBytes;
         }
     }
