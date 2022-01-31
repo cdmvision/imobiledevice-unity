@@ -27,20 +27,44 @@ namespace Cdm.iOS.Talk
             _socket?.Disconnect(false);
         }
 
-        public int Send(byte[] buffer, int size)
+        public int Send(byte[] buffer, int length)
         {
             if (_socket == null)
                 throw new InvalidOperationException("Socket is not connected.");
             
-            return _socket.Send(buffer, 0, size, SocketFlags.None);
+            var sentTotal = 0;
+            
+            while (sentTotal < length) 
+            {
+                var recv = _socket.Send(buffer, sentTotal, length - sentTotal, SocketFlags.None);
+                if (recv == 0)
+                {
+                    break;
+                }
+                sentTotal += recv;
+            }
+            
+            return sentTotal;
         }
 
-        public int Receive(byte[] buffer, int size)
+        public int Receive(byte[] buffer, int length)
         {            
             if (_socket == null)
                 throw new InvalidOperationException("Socket is not connected.");
             
-            return _socket.Receive(buffer, 0, size, SocketFlags.None);
+            var recvTotal = 0;
+            
+            while (recvTotal < length) 
+            {
+                var recv = _socket.Receive(buffer, recvTotal, length - recvTotal, SocketFlags.None);
+                if (recv == 0)
+                {
+                    break;
+                }
+                recvTotal += recv;
+            }
+            
+            return recvTotal;
         }
         
         public void Dispose()
