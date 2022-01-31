@@ -4,6 +4,7 @@
     "references": [],
     "includePlatforms": [
         "Editor",
+        "iOS",
         "LinuxStandalone64",
         "macOSStandalone",
         "WindowsStandalone64"
