@@ -60,15 +60,16 @@ public class HostScript : MonoBehaviour
             using var deviceSocket = new HostSocket(deviceInfo);
             deviceSocket.Connect(DeviceScript.Port);
             Debug.Log($"Device connected with port {DeviceScript.Port}");
-        
-            // Send texture width, height and format.
+
+            Debug.Log($"Sending texture info: {_textureWidth}x{_textureHeight} {(TextureFormat) _textureFormat} with {_textureData.Length} bytes");
             if (deviceSocket.Send(_textureWidth) &&
                 deviceSocket.Send(_textureHeight) &&
-                deviceSocket.Send(_textureFormat))
+                deviceSocket.Send(_textureFormat) &&
+                deviceSocket.Send(_textureData.Length))
             {
-                // Send data length then the data itself.
-                if (deviceSocket.Send(_textureData.Length) &&
-                    deviceSocket.Send(_textureData, _textureData.Length) == _textureData.Length)
+                Debug.Log($"Sending texture data with {_textureData.Length} bytes...");
+                
+                if (deviceSocket.Send(_textureData, _textureData.Length) == _textureData.Length)
                 {
                     Debug.Log("Texture has been sent!");
                     return;
