@@ -124,7 +124,7 @@ namespace Cdm.iOS.Talk
             {
                 var udid = deviceEvent.udidString;
                 var eventType =  deviceEvent.@event;
-                var connectionType = deviceEvent.conn_type; // TODO:
+                var connectionType = deviceEvent.conn_type;
                 
                 PendingEvents.Enqueue(new DeviceEvent()
                 {
@@ -132,8 +132,6 @@ namespace Cdm.iOS.Talk
                     eventType = eventType,
                     connectionType = connectionType
                 });
-                
-                Debug.Log("OnDeviceEventCallback " + Thread.CurrentThread.ManagedThreadId);
             };
         }
 
@@ -155,7 +153,7 @@ namespace Cdm.iOS.Talk
 
                 lockdownApi.lockdownd_get_device_name(lockdownClientHandle, out var deviceName)
                     .ThrowOnError();
-
+                
                 deviceInfo = new DeviceInfo(deviceInfo.udid, deviceName, deviceInfo.connectionType);
                 return true;
             }

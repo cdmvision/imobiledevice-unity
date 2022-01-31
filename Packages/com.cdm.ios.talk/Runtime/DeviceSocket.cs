@@ -6,37 +6,31 @@ namespace Cdm.iOS.Talk
 {
     public class DeviceSocket : IDeviceSocket
     {
-        private Socket _mainSocket;
+        private Socket _serverSocket;
         private Socket _socket;
-        
-        public void Dispose()
-        {
-            _mainSocket?.Dispose();
-            _socket?.Dispose();
-        }
 
         public void Connect(int port)
         {
-            var mainSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            mainSocket.Bind(new IPEndPoint(IPAddress.Loopback, port));
-            mainSocket.Listen(1);
+            var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            serverSocket.Bind(new IPEndPoint(IPAddress.Loopback, port));
+            serverSocket.Listen(1);
             
-            var socket = mainSocket.Accept();
+            var socket = serverSocket.Accept();
 
-            _mainSocket = mainSocket;
+            _serverSocket = serverSocket;
             _socket = socket;
         }
 
         public void Disconnect()
         {
-            _mainSocket?.Disconnect(false);
+            _serverSocket?.Disconnect(false);
             _socket?.Disconnect(false);
         }
 
         public int Send(byte[] buffer, int size)
         {
             if (_socket == null)
-                throw new InvalidOperationException("There is no connection.");
+                throw new InvalidOperationException("Socket is not connected.");
             
             return _socket.Send(buffer, 0, size, SocketFlags.None);
         }
@@ -44,9 +38,20 @@ namespace Cdm.iOS.Talk
         public int Receive(byte[] buffer, int size)
         {            
             if (_socket == null)
-                throw new InvalidOperationException("There is no connection.");
+                throw new InvalidOperationException("Socket is not connected.");
             
             return _socket.Receive(buffer, 0, size, SocketFlags.None);
+        }
+        
+        public void Dispose()
+        {
+            _socket?.Shutdown(SocketShutdown.Both);
+            _socket?.Close();
+            _socket?.Dispose();
+            
+            _serverSocket?.Shutdown(SocketShutdown.Both);
+            _serverSocket?.Close();
+            _serverSocket?.Dispose();
         }
     }
 }

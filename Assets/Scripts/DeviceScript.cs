@@ -11,7 +11,7 @@ public class DeviceScript : MonoBehaviour
     public RawImage image;
     public TMP_Text deviceInfoText;
 
-#if UNITY_IOS //|| UNITY_EDITOR
+#if UNITY_IOS || UNITY_EDITOR
     private Texture2D _texture;
     private IDeviceSocket _deviceSocket;
     
@@ -33,7 +33,7 @@ public class DeviceScript : MonoBehaviour
         Debug.Log($"Waiting for incoming connection...");
         _deviceSocket = new DeviceSocket();
         _deviceSocket.Connect(Port);
-        deviceInfoText.text = "Connected!";
+        //deviceInfoText.text = "Connected!";
         Debug.Log($"Connected to host!");
 
         if (_deviceSocket.Receive(out int width) &&
@@ -65,11 +65,9 @@ public class DeviceScript : MonoBehaviour
         }
         
         Debug.LogError($"Texture could not be received!");
-
-        if (_texture == null)
-        {
-            deviceInfoText.text = "Failed to receive the texture!";
-        }
+        
+        _deviceSocket.Disconnect();
+        _deviceSocket.Dispose();
     }
 #endif
 }
