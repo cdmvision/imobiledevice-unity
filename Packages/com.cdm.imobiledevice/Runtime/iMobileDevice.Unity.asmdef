@@ -1,6 +1,6 @@
 {
-    "name": "Cdm.iOS.Talk",
-    "rootNamespace": "Cdm.iOS.Talk",
+    "name": "iMobileDevice.Unity",
+    "rootNamespace": "iMobileDevice.Unity",
     "references": [],
     "includePlatforms": [
         "Editor",
