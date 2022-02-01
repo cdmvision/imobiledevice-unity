@@ -1,3 +1,4 @@
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using Cdm.iOS.Talk;
@@ -71,7 +72,6 @@ public class HostScript : MonoBehaviour
         var ack = await socket.ReceiveInt32Async();
         Debug.Log($"Received  ACK: {(ack.HasValue ? "YES" : "NO")}");
         
-        Debug.Log($"Receiving texture info...");
         var texture = await SocketTextureUtility.ReceiveAsync(socket);
         if (texture != null)
         {

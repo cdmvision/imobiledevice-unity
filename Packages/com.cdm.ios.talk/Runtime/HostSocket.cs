@@ -1,7 +1,6 @@
 ﻿using System;
 using iMobileDevice;
 using iMobileDevice.iDevice;
-using UnityEngine;
 
 namespace Cdm.iOS.Talk
 {
@@ -9,6 +8,7 @@ namespace Cdm.iOS.Talk
     {
         public DeviceInfo deviceInfo { get; }
 
+        private byte[] _buffer = new byte[4096];
         private iDeviceHandle _deviceHandle;
         private iDeviceConnectionHandle _connectionHandle;
         
@@ -33,7 +33,6 @@ namespace Cdm.iOS.Talk
                 var deviceApi = LibiMobileDevice.Instance.iDevice;
                 deviceApi.idevice_new(out deviceHandle, deviceInfo.udid).ThrowOnError();
                 deviceApi.idevice_connect(deviceHandle, (ushort) port, out connectionHandle).ThrowOnError();
-                
                 _deviceHandle = deviceHandle;
                 _connectionHandle = connectionHandle;
             }
@@ -50,9 +49,6 @@ namespace Cdm.iOS.Talk
         /// </summary>
         public void Disconnect()
         {
-            var deviceApi = LibiMobileDevice.Instance.iDevice;
-            deviceApi.idevice_disconnect(_connectionHandle.DangerousGetHandle());
-            
             _deviceHandle?.Dispose();
             _deviceHandle = null;
             
@@ -79,16 +75,42 @@ namespace Cdm.iOS.Talk
         /// Receive data from a device via the given connection.
         /// </summary>
         /// <param name="buffer">Buffer that will be filled with the received data. This buffer has to be
-        /// large enough to hold <see cref="size"/> bytes.</param>
-        /// <param name="size">Buffer size or number of bytes to receive.</param>
+        /// large enough to hold <see cref="length"/> bytes.</param>
+        /// <param name="length">Buffer size or number of bytes to receive.</param>
         /// <returns></returns>
-        public int Receive(byte[] buffer, int size)
+        public int Receive(byte[] buffer, int length)
         {
             var deviceApi = LibiMobileDevice.Instance.iDevice;
-            
-            uint receivedBytes = 0;
-            deviceApi.idevice_connection_receive(_connectionHandle, buffer, (uint) size, ref receivedBytes).ThrowOnError();
-            return (int) receivedBytes;
+
+            // Use actual buffer if given buffer length is small.
+            if (_buffer.Length > length)
+            {
+                uint recvBytes = 0;
+                deviceApi.idevice_connection_receive(_connectionHandle, buffer, (uint) length, ref recvBytes)
+                    .ThrowOnError();
+                return (int) recvBytes;
+            }
+
+            // Read buffered.
+            var recvTotal = 0;
+
+            while (recvTotal < length)
+            {
+                var lengthRead = Math.Min(length - recvTotal, _buffer.Length);
+
+                uint recv = 0;
+                deviceApi.idevice_connection_receive(_connectionHandle, _buffer, (uint) lengthRead, ref recv)
+                    .ThrowOnError();
+                if (recv == 0)
+                {
+                    break;
+                }
+                
+                Array.Copy(_buffer, 0, buffer, recvTotal, recv);
+                recvTotal += (int) recv;
+            }
+
+            return recvTotal;
         }
     }
 }
