@@ -24,4 +24,4 @@ jobs:
       - name: Publish unity package
         uses: cdmvision/action-upm-publish@v1
         with:
-          name: "com.cdm.ios.talk"
+          name: "com.cdm.imobiledevice"
