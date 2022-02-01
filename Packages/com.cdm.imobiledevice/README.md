@@ -1,4 +1,4 @@
-## Unity iOS Talk
+## iMobileDevice for Unity
 
 A Unity package for communicating with iOS over USB. It is based on the iMobileDevice.Net library.
 
