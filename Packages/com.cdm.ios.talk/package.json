@@ -1,7 +1,7 @@
 {
   "name": "com.cdm.ios.talk",
   "displayName": "Unity iOS Talk",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "unity": "2020.3",
   "description": "A Unity package for communicating with iOS over USB.",
   "keywords": [
