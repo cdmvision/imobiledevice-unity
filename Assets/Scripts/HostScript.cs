@@ -1,7 +1,7 @@
 using System.Threading;
 using TMPro;
 using UnityEngine;
-using Cdm.iOS.Talk;
+using iMobileDevice.Unity;
 using UnityEngine.UI;
 using Debug = UnityEngine.Debug;
 

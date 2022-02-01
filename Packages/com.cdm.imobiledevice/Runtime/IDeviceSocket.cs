@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cdm.iOS.Talk
+namespace iMobileDevice.Unity
 {
     public interface IDeviceSocket : IDisposable
     {

@@ -2,13 +2,11 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using iMobileDevice;
 using iMobileDevice.iDevice;
 using iMobileDevice.Lockdown;
 using UnityEngine;
 
-namespace Cdm.iOS.Talk
+namespace iMobileDevice.Unity
 {
     public class DeviceWatcher 
     {

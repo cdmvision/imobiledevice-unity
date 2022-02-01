@@ -1,8 +1,7 @@
 ﻿using System;
-using iMobileDevice;
 using iMobileDevice.iDevice;
 
-namespace Cdm.iOS.Talk
+namespace iMobileDevice.Unity
 {
     public class HostSocket : IDeviceSocket
     {

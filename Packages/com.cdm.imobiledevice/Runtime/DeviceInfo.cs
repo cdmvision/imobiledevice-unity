@@ -1,7 +1,7 @@
 ﻿using System;
 using iMobileDevice.iDevice;
 
-namespace Cdm.iOS.Talk
+namespace iMobileDevice.Unity
 {
     public readonly struct DeviceInfo : IEquatable<DeviceInfo>
     {

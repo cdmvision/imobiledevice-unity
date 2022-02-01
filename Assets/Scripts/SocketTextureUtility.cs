@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using Cdm.iOS.Talk;
+using iMobileDevice.Unity;
 using UnityEngine;
 
 public static class SocketTextureUtility
