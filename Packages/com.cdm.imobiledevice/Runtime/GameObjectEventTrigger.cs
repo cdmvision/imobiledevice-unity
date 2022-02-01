@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Cdm.iOS.Talk
+namespace iMobileDevice.Unity
 {
     [DisallowMultipleComponent]
     public class GameObjectEventTrigger : MonoBehaviour

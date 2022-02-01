@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace Cdm.iOS.Talk
+namespace iMobileDevice.Unity
 {
     public static class DeviceSocketExtensions
     {

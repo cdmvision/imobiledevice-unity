@@ -2,7 +2,7 @@
 using System.Net;
 using System.Net.Sockets;
 
-namespace Cdm.iOS.Talk
+namespace iMobileDevice.Unity
 {
     public class DeviceSocket : IDeviceSocket
     {

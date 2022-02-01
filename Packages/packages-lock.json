@@ -1,7 +1,7 @@
 {
   "dependencies": {
-    "com.cdm.ios.talk": {
-      "version": "file:com.cdm.ios.talk",
+    "com.cdm.imobiledevice": {
+      "version": "file:com.cdm.imobiledevice",
       "depth": 0,
       "source": "embedded",
       "dependencies": {}
