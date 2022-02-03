@@ -10,7 +10,7 @@ namespace iMobileDevice.Unity
 {
     public class DeviceWatcher 
     {
-        private const string Label = "Cdm.iOS.Talk.DeviceWatcher";
+        private const string HandshakeLabel = "iMobileDevice.Unity";
         
         private readonly HashSet<DeviceInfo> _availableDevices = new HashSet<DeviceInfo>();
 
@@ -146,7 +146,7 @@ namespace iMobileDevice.Unity
                 deviceApi.idevice_new(out deviceHandle, deviceInfo.udid)
                     .ThrowOnError();
 
-                lockdownApi.lockdownd_client_new_with_handshake(deviceHandle, out lockdownClientHandle, Label)
+                lockdownApi.lockdownd_client_new_with_handshake(deviceHandle, out lockdownClientHandle, HandshakeLabel)
                     .ThrowOnError();
 
                 lockdownApi.lockdownd_get_device_name(lockdownClientHandle, out var deviceName)
