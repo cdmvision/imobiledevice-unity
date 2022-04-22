@@ -22,11 +22,13 @@ namespace iMobileDevice.Unity
         {
             if (_socket != null && _socket.Connected)
             {
+                _socket.Shutdown(SocketShutdown.Both);
                 _socket.Disconnect(false);
             }
             
             if (_serverSocket != null && _serverSocket.Connected)
             {
+                _serverSocket.Shutdown(SocketShutdown.Both);
                 _serverSocket.Disconnect(false);  
             }
         }

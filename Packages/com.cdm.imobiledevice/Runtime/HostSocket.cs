@@ -52,11 +52,7 @@ namespace iMobileDevice.Unity
         /// </summary>
         public void Disconnect()
         {
-            if (_connectionHandle != iDeviceConnectionHandle.Zero)
-            {
-                var deviceApi = LibiMobileDevice.Instance.iDevice;
-                deviceApi.idevice_disconnect(_connectionHandle.DangerousGetHandle());
-            }
+            Dispose();
         }
 
         /// <summary>
