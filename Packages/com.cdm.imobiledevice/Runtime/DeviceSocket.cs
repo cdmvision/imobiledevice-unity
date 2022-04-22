@@ -11,20 +11,24 @@ namespace iMobileDevice.Unity
 
         public void Connect(int port)
         {
-            var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            serverSocket.Bind(new IPEndPoint(IPAddress.Loopback, port));
-            serverSocket.Listen(1);
+            _serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            _serverSocket.Bind(new IPEndPoint(IPAddress.Loopback, port));
+            _serverSocket.Listen(1);
             
-            var socket = serverSocket.Accept();
-
-            _serverSocket = serverSocket;
-            _socket = socket;
+            _socket = _serverSocket.Accept();
         }
 
         public void Disconnect()
         {
-            _serverSocket?.Disconnect(false);
-            _socket?.Disconnect(false);
+            if (_socket != null && _socket.Connected)
+            {
+                _socket.Disconnect(false);
+            }
+            
+            if (_serverSocket != null && _serverSocket.Connected)
+            {
+                _serverSocket.Disconnect(false);  
+            }
         }
 
         public int Send(byte[] buffer, int length)
@@ -69,13 +73,8 @@ namespace iMobileDevice.Unity
         
         public void Dispose()
         {
-            _socket?.Shutdown(SocketShutdown.Both);
             _socket?.Close();
-            _socket?.Dispose();
-            
-            _serverSocket?.Shutdown(SocketShutdown.Both);
             _serverSocket?.Close();
-            _serverSocket?.Dispose();
         }
     }
 }

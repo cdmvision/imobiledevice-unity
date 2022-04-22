@@ -19,7 +19,10 @@ namespace iMobileDevice.Unity
         public void Dispose()
         {
             _deviceHandle?.Dispose();
+            _deviceHandle = null;
+            
             _connectionHandle?.Dispose();
+            _connectionHandle = null;
         }
         
         public void Connect(int port)
@@ -32,6 +35,7 @@ namespace iMobileDevice.Unity
                 var deviceApi = LibiMobileDevice.Instance.iDevice;
                 deviceApi.idevice_new(out deviceHandle, deviceInfo.udid).ThrowOnError();
                 deviceApi.idevice_connect(deviceHandle, (ushort) port, out connectionHandle).ThrowOnError();
+                
                 _deviceHandle = deviceHandle;
                 _connectionHandle = connectionHandle;
             }
@@ -44,15 +48,15 @@ namespace iMobileDevice.Unity
         }
 
         /// <summary>
-        /// Disconnect from the device and clean up resources.
+        /// Disconnects from the device.
         /// </summary>
         public void Disconnect()
         {
-            _deviceHandle?.Dispose();
-            _deviceHandle = null;
-            
-            _connectionHandle?.Dispose();
-            _connectionHandle = null;
+            if (_connectionHandle != iDeviceConnectionHandle.Zero)
+            {
+                var deviceApi = LibiMobileDevice.Instance.iDevice;
+                deviceApi.idevice_disconnect(_connectionHandle.DangerousGetHandle());
+            }
         }
 
         /// <summary>
