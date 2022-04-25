@@ -10,7 +10,7 @@ namespace iMobileDevice.Unity
         private byte[] _buffer = new byte[4096];
         private iDeviceHandle _deviceHandle;
         private iDeviceConnectionHandle _connectionHandle;
-        
+
         public HostSocket(DeviceInfo deviceInfo)
         {
             this.deviceInfo = deviceInfo;
@@ -18,8 +18,11 @@ namespace iMobileDevice.Unity
         
         public void Dispose()
         {
-            _deviceHandle?.Dispose();
             _connectionHandle?.Dispose();
+            _connectionHandle = null;
+            
+            _deviceHandle?.Dispose();
+            _deviceHandle = null;
         }
         
         public void Connect(int port)
@@ -44,15 +47,11 @@ namespace iMobileDevice.Unity
         }
 
         /// <summary>
-        /// Disconnect from the device and clean up resources.
+        /// Disconnects from the device.
         /// </summary>
         public void Disconnect()
         {
-            _deviceHandle?.Dispose();
-            _deviceHandle = null;
-            
-            _connectionHandle?.Dispose();
-            _connectionHandle = null;
+            Dispose();
         }
 
         /// <summary>

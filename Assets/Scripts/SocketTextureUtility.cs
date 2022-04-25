@@ -17,8 +17,7 @@ public static class SocketTextureUtility
             var textureData = texture.GetRawTextureData();
             Debug.Log($"Sending texture data with {textureData.Length} bytes...");
 
-            if (await socket.SendInt32Async(textureData.Length) &&
-                await socket.SendAsync(textureData, textureData.Length) == textureData.Length)
+            if (await socket.SendBufferAsync(textureData))
             {
                 return true;
             }
@@ -34,16 +33,15 @@ public static class SocketTextureUtility
         var width = await socket.ReceiveInt32Async();
         var height = await socket.ReceiveInt32Async();
         var format = await socket.ReceiveInt32Async();
-        var length = await socket.ReceiveInt32Async();
 
-        if (width.HasValue && height.HasValue && format.HasValue && length.HasValue)
+        if (width.HasValue && height.HasValue && format.HasValue)
         {
-            Debug.Log($"Received texture info: {width}x{height} {(TextureFormat) format} with {length} bytes");
-            
-            var textureData = new byte[length.Value];
-            if (await socket.ReceiveAsync(textureData, textureData.Length) == textureData.Length)
+            Debug.Log($"Received texture info: {width}x{height} {(TextureFormat) format}");
+
+            var textureData = await socket.ReceiveBufferAsync();
+            if (textureData != null)
             {
-                Debug.Log($"Received texture data: {length} bytes");
+                Debug.Log($"Received texture data: {textureData.Length} bytes");
                     
                 var texture = new Texture2D(width.Value, height.Value, (TextureFormat) format.Value, false);
                 texture.LoadRawTextureData(textureData);
