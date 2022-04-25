@@ -15,7 +15,7 @@ namespace iMobileDevice.Unity
         
         private readonly HashSet<DeviceInfo> _availableDevices = new HashSet<DeviceInfo>();
         private readonly ConcurrentQueue<DeviceEvent> _pendingEvents = new ConcurrentQueue<DeviceEvent>();
-        
+
         /// <summary>
         /// Gets the available devices.
         /// </summary>
@@ -96,10 +96,16 @@ namespace iMobileDevice.Unity
                 var deviceInfo = availableDevices.FirstOrDefault(d => d.udid == deviceEvent.udid);
                 if (deviceInfo.udid != deviceEvent.udid)
                 {
+                    // Create new device info.
                     deviceInfo = new DeviceInfo(deviceEvent.udid, "", deviceEvent.connectionType);
                     PopulateDeviceName(ref deviceInfo);
                 }
-                
+                else
+                {
+                    // Update connection type.
+                    deviceInfo = new DeviceInfo(deviceInfo.udid, deviceInfo.name, deviceEvent.connectionType);
+                }
+
                 switch (deviceEvent.eventType)
                 {
                     case iDeviceEventType.DeviceAdd:
@@ -124,7 +130,7 @@ namespace iMobileDevice.Unity
             var udid = iDeviceEvent.udidString;
             var eventType =  iDeviceEvent.@event;
             var connectionType = iDeviceEvent.conn_type;
-                
+
             _pendingEvents.Enqueue(new DeviceEvent()
             {
                 udid = udid,

@@ -67,6 +67,9 @@ public class HostScript : MonoBehaviour
 
         if (!string.IsNullOrEmpty(_deviceId))
             return;
+
+        if (e.deviceInfo.connectionType != iDeviceConnectionType.Usbmuxd)
+            return;
         
         deviceInfoText.text = $"{deviceInfoText.name} [{e.deviceInfo.udid}] [{e.deviceInfo.connectionType}]";
 
