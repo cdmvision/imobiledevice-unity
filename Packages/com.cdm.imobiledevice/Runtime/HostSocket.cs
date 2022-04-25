@@ -10,7 +10,7 @@ namespace iMobileDevice.Unity
         private byte[] _buffer = new byte[4096];
         private iDeviceHandle _deviceHandle;
         private iDeviceConnectionHandle _connectionHandle;
-        
+
         public HostSocket(DeviceInfo deviceInfo)
         {
             this.deviceInfo = deviceInfo;
@@ -18,11 +18,11 @@ namespace iMobileDevice.Unity
         
         public void Dispose()
         {
-            _deviceHandle?.Dispose();
-            _deviceHandle = null;
-            
             _connectionHandle?.Dispose();
             _connectionHandle = null;
+            
+            _deviceHandle?.Dispose();
+            _deviceHandle = null;
         }
         
         public void Connect(int port)
@@ -35,7 +35,6 @@ namespace iMobileDevice.Unity
                 var deviceApi = LibiMobileDevice.Instance.iDevice;
                 deviceApi.idevice_new(out deviceHandle, deviceInfo.udid).ThrowOnError();
                 deviceApi.idevice_connect(deviceHandle, (ushort) port, out connectionHandle).ThrowOnError();
-                
                 _deviceHandle = deviceHandle;
                 _connectionHandle = connectionHandle;
             }

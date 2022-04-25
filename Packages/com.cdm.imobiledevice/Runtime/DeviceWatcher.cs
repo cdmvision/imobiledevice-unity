@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using iMobileDevice.iDevice;
 using iMobileDevice.Lockdown;
 using UnityEngine;
@@ -13,17 +14,16 @@ namespace iMobileDevice.Unity
         private const string HandshakeLabel = "iMobileDevice.Unity";
         
         private readonly HashSet<DeviceInfo> _availableDevices = new HashSet<DeviceInfo>();
-
+        private readonly ConcurrentQueue<DeviceEvent> _pendingEvents = new ConcurrentQueue<DeviceEvent>();
+        
         /// <summary>
         /// Gets the available devices.
         /// </summary>
         public IReadOnlyCollection<DeviceInfo> availableDevices => _availableDevices;
         
-        // TODO: make member instead of static
-        private static readonly ConcurrentQueue<DeviceEvent> PendingEvents = new ConcurrentQueue<DeviceEvent>();
-        
         private iDeviceEventCallBack _deviceEventCallback;
         private GameObjectEventTrigger _gameObjectEventTrigger;
+        private GCHandle _instanceHandle;
         
         public bool isEnabled { get; private set; }
 
@@ -53,12 +53,13 @@ namespace iMobileDevice.Unity
             _gameObjectEventTrigger = go.AddComponent<GameObjectEventTrigger>();
             _gameObjectEventTrigger.updateCallback = Update;
             
+            _instanceHandle = GCHandle.Alloc(this);
             _deviceEventCallback = GetDeviceEventCallback();
 
             try
             {
-                LibiMobileDevice.Instance.iDevice.idevice_event_subscribe(_deviceEventCallback, IntPtr.Zero)
-                    .ThrowOnError();
+                LibiMobileDevice.Instance.iDevice.idevice_event_subscribe(
+                        _deviceEventCallback, GCHandle.ToIntPtr(_instanceHandle)).ThrowOnError();
             }
             catch (Exception)
             {
@@ -74,6 +75,10 @@ namespace iMobileDevice.Unity
         {
             if (!isEnabled)
                 return;
+
+            _instanceHandle.Free();
+            _deviceEventCallback = null;
+            isEnabled = false;
             
             if (_gameObjectEventTrigger != null)
             {
@@ -81,14 +86,12 @@ namespace iMobileDevice.Unity
                 _gameObjectEventTrigger = null;
             }
 
-            _deviceEventCallback = null;
-            isEnabled = false;
             LibiMobileDevice.Instance.iDevice.idevice_event_unsubscribe().ThrowOnError();
         }
 
         private void Update()
         {
-            while (PendingEvents.TryDequeue(out var deviceEvent))
+            while (_pendingEvents.TryDequeue(out var deviceEvent))
             {
                 var deviceInfo = availableDevices.FirstOrDefault(d => d.udid == deviceEvent.udid);
                 if (deviceInfo.udid != deviceEvent.udid)
@@ -116,20 +119,27 @@ namespace iMobileDevice.Unity
             }
         }
 
+        private void OnDeviceEvent(iDeviceEvent iDeviceEvent)
+        {
+            var udid = iDeviceEvent.udidString;
+            var eventType =  iDeviceEvent.@event;
+            var connectionType = iDeviceEvent.conn_type;
+                
+            _pendingEvents.Enqueue(new DeviceEvent()
+            {
+                udid = udid,
+                eventType = eventType,
+                connectionType = connectionType
+            });
+        }
+
         private static iDeviceEventCallBack GetDeviceEventCallback()
         {
             return (ref iDeviceEvent deviceEvent, IntPtr data) =>
             {
-                var udid = deviceEvent.udidString;
-                var eventType =  deviceEvent.@event;
-                var connectionType = deviceEvent.conn_type;
-                
-                PendingEvents.Enqueue(new DeviceEvent()
-                {
-                    udid = udid,
-                    eventType = eventType,
-                    connectionType = connectionType
-                });
+                var instanceHandle = GCHandle.FromIntPtr(data);
+                var deviceWatcher = instanceHandle.Target as DeviceWatcher;
+                deviceWatcher?.OnDeviceEvent(deviceEvent);
             };
         }
 
