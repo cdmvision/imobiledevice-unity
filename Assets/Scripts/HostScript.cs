@@ -74,14 +74,14 @@ public class HostScript : MonoBehaviour
         deviceInfoText.text = $"{deviceInfoText.name} [{e.deviceInfo.udid}] [{e.deviceInfo.connectionType}]";
 
         Debug.Log($"Trying to connect to the device on port {SocketTextureUtility.Port}...");
-        IDeviceSocket socket = null;
+        ISocketConnection socket = null;
 
         var isConnected = false;
         while (!isConnected && !_cancellationTokenSource.IsCancellationRequested)
         {
             try
             {
-                socket = new HostSocket(e.deviceInfo);
+                socket = new HostSocketConnection(e.deviceInfo);
                 await socket.ConnectAsync(SocketTextureUtility.Port);
                 isConnected = true;
             }

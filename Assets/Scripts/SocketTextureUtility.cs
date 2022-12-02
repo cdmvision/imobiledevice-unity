@@ -6,7 +6,7 @@ public static class SocketTextureUtility
 {
     public const int Port = 7799;
     
-    public static async Task<bool> SendAsync(IDeviceSocket socket, Texture2D texture)
+    public static async Task<bool> SendAsync(ISocketConnection socket, Texture2D texture)
     {
         Debug.Log($"Sending texture info: {texture.width}x{texture.height} {texture.format}");
 
@@ -26,7 +26,7 @@ public static class SocketTextureUtility
         return false;
     }
 
-    public static async Task<Texture2D> ReceiveAsync(IDeviceSocket socket)
+    public static async Task<Texture2D> ReceiveAsync(ISocketConnection socket)
     {
         Debug.Log($"Receiving texture info...");
 
