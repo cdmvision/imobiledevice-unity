@@ -27,11 +27,12 @@ namespace iMobileDevice.Unity
         
         public void Dispose()
         {
+            /* Commented because of crash.
             if (_connectionHandle != null && !_connectionHandle.IsClosed && !_connectionHandle.IsInvalid)
             {
                 var deviceApi = LibiMobileDevice.Instance.iDevice;
                 deviceApi.idevice_disconnect(_connectionHandle.DangerousGetHandle());    
-            }
+            }*/
 
             _connectionHandle?.Dispose();
             _connectionHandle = null;
