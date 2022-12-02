@@ -22,7 +22,7 @@ public class DeviceScript : MonoBehaviour
         deviceInfoText.text = "Waiting for connection...";
 
         Debug.Log($"Waiting for incoming connection on port {SocketTextureUtility.Port}...");
-        using var socket = new DeviceSocket();
+        using var socket = new DeviceSocketConnection();
         await socket.ConnectAsync(SocketTextureUtility.Port);
         Debug.Log($"Connected to host!");
 

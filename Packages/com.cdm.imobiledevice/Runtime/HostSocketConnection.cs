@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using iMobileDevice.iDevice;
+using UnityEngine;
 
 namespace iMobileDevice.Unity
 {
-    public class HostSocket : IDeviceSocket
+    public class HostSocketConnection : ISocketConnection
     {
         public DeviceInfo deviceInfo { get; }
 
@@ -11,13 +15,24 @@ namespace iMobileDevice.Unity
         private iDeviceHandle _deviceHandle;
         private iDeviceConnectionHandle _connectionHandle;
 
-        public HostSocket(DeviceInfo deviceInfo)
+        /// <summary>
+        /// Timeout in milliseconds after which this function should return even if no data has been received.
+        /// </summary>
+        public uint receiveTimeout { get; set; } = 0;
+
+        public HostSocketConnection(DeviceInfo deviceInfo)
         {
             this.deviceInfo = deviceInfo;
         }
         
         public void Dispose()
         {
+            if (_connectionHandle != null && !_connectionHandle.IsClosed && !_connectionHandle.IsInvalid)
+            {
+                var deviceApi = LibiMobileDevice.Instance.iDevice;
+                deviceApi.idevice_disconnect(_connectionHandle.DangerousGetHandle());    
+            }
+
             _connectionHandle?.Dispose();
             _connectionHandle = null;
             
@@ -35,6 +50,9 @@ namespace iMobileDevice.Unity
                 var deviceApi = LibiMobileDevice.Instance.iDevice;
                 deviceApi.idevice_new(out deviceHandle, deviceInfo.udid).ThrowOnError();
                 deviceApi.idevice_connect(deviceHandle, (ushort) port, out connectionHandle).ThrowOnError();
+                //deviceApi.idevice_set_debug_callback(DebugCallBack);
+                //deviceApi.idevice_set_debug_level(1);
+                
                 _deviceHandle = deviceHandle;
                 _connectionHandle = connectionHandle;
             }
@@ -84,8 +102,18 @@ namespace iMobileDevice.Unity
             if (_buffer.Length > length)
             {
                 uint recvBytes = 0;
-                deviceApi.idevice_connection_receive(_connectionHandle, buffer, (uint) length, ref recvBytes)
-                    .ThrowOnError();
+
+                if (receiveTimeout == 0)
+                {
+                    deviceApi.idevice_connection_receive(_connectionHandle, buffer, (uint) length, ref recvBytes)
+                        .ThrowOnError();
+                }
+                else
+                {
+                    deviceApi.idevice_connection_receive_timeout(
+                            _connectionHandle, buffer, (uint) length, ref recvBytes, receiveTimeout).ThrowOnError(); 
+                }
+
                 return (int) recvBytes;
             }
 
@@ -97,8 +125,18 @@ namespace iMobileDevice.Unity
                 var lengthRead = Math.Min(length - recvTotal, _buffer.Length);
 
                 uint recv = 0;
-                deviceApi.idevice_connection_receive(_connectionHandle, _buffer, (uint) lengthRead, ref recv)
-                    .ThrowOnError();
+
+                if (receiveTimeout == 0)
+                {
+                    deviceApi.idevice_connection_receive(_connectionHandle, _buffer, (uint)lengthRead, ref recv)
+                        .ThrowOnError();
+                }
+                else
+                {
+                    deviceApi.idevice_connection_receive_timeout(
+                            _connectionHandle, _buffer, (uint) lengthRead, ref recv, receiveTimeout).ThrowOnError(); 
+                }
+
                 if (recv == 0)
                 {
                     break;
@@ -109,6 +147,28 @@ namespace iMobileDevice.Unity
             }
 
             return recvTotal;
+        }
+
+        /// <summary>
+        /// Async version <see cref="Send"/>.
+        /// </summary>
+        public async Task<int> SendAsync(byte[] buffer, int length, CancellationToken cancellationToken = default)
+        {
+            return await Task.Run(() => Send(buffer, length), cancellationToken);
+        }
+
+        /// <summary>
+        /// Async version <see cref="Receive"/>.
+        /// </summary>
+        public async Task<int> ReceiveAsync(byte[] buffer, int length, CancellationToken cancellationToken = default)
+        {
+            return await Task.Run(() => Receive(buffer, length), cancellationToken);
+        }
+
+        private static void DebugCallBack(IntPtr message)
+        {
+            var messageStr = Marshal.PtrToStringAuto(message);
+            Debug.Log(messageStr);
         }
     }
 }

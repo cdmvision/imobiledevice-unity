@@ -433,7 +433,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be05dcfe5db9efb4aa08c9ecae7b5b70, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  connectionWaitTime: 3
+  connectionWaitTime: 1.5
   textureToSend: {fileID: 2800000, guid: 8e8681e222e7a7c42ace582a424959b0, type: 3}
   image: {fileID: 242714209}
   deviceInfoText: {fileID: 1640341288}
