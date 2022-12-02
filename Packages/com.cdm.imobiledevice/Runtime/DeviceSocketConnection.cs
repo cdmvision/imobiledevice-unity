@@ -9,66 +9,36 @@ namespace iMobileDevice.Unity
     public class DeviceSocketConnection : ISocketConnection
     {
         private Socket _serverSocket;
-        private Socket _socket;
         
-        public Socket socket => _socket;
-
-        private int _receiveTimeout = 0;
-        private int _sendTimeout = 0;
-
-        /// <summary>
-        /// Gets or sets a value that specifies the amount of time after which a synchronous <see cref="Receive"/>
-        /// call will time out.
-        /// </summary>
-        public int receiveTimeout
-        {
-            get => _receiveTimeout;
-            set
-            {
-                _receiveTimeout = value;
-                
-                if (socket != null)
-                {
-                    socket.ReceiveTimeout = _receiveTimeout;
-                }
-            }
-        }
+        public Socket socket { get; private set; }
         
-        /// <summary>
-        /// Gets or sets a value that specifies the amount of time after which a synchronous <see cref="Send"/>
-        /// call will time out.
-        /// </summary>
-        public int sendTimeout
+        public void Connect(Socket acceptSocket)
         {
-            get => _sendTimeout;
-            set
-            {
-                _sendTimeout = value;
+            if (socket != null && socket.Connected)
+                throw new InvalidOperationException("Disconnect current socket before using a new socket.");
 
-                if (socket != null)
-                {
-                    socket.SendTimeout = _sendTimeout;
-                }
-            }
+            socket?.Dispose();
+            socket = acceptSocket;
         }
         
         public void Connect(int port)
         {
-            _serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _serverSocket.Bind(new IPEndPoint(IPAddress.Loopback, port));
-            _serverSocket.Listen(1);
-
-            _socket = _serverSocket.Accept();
-            _socket.ReceiveTimeout = receiveTimeout;
-            _socket.SendTimeout = sendTimeout;
+            if (socket == null || !socket.Connected)
+            {
+                _serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                _serverSocket.Bind(new IPEndPoint(IPAddress.Loopback, port));
+                _serverSocket.Listen(1);
+                
+                socket = _serverSocket.Accept();
+            }
         }
 
         public void Disconnect()
         {
-            if (_socket != null && _socket.Connected)
+            if (socket != null && socket.Connected)
             {
-                _socket.Shutdown(SocketShutdown.Both);
-                _socket.Disconnect(false);
+                socket.Shutdown(SocketShutdown.Both);
+                socket.Disconnect(false);
             }
 
             if (_serverSocket != null && _serverSocket.Connected)
@@ -100,7 +70,7 @@ namespace iMobileDevice.Unity
 
         private int SendInternal(byte[] buffer, int length, CancellationToken cancellationToken = default)
         {
-            if (_socket == null)
+            if (socket == null)
                 throw new InvalidOperationException("Socket is not connected.");
             
             var totalSentBytes = 0;
@@ -110,7 +80,7 @@ namespace iMobileDevice.Unity
                 if (cancellationToken.IsCancellationRequested)
                     throw new TaskCanceledException();
 
-                var sentBytes = _socket.Send(buffer, totalSentBytes, length - totalSentBytes, SocketFlags.None);
+                var sentBytes = socket.Send(buffer, totalSentBytes, length - totalSentBytes, SocketFlags.None);
                 if (sentBytes == 0)
                     break;
 
@@ -122,7 +92,7 @@ namespace iMobileDevice.Unity
 
         private int ReceiveInternal(byte[] buffer, int length, CancellationToken cancellationToken = default)
         {
-            if (_socket == null)
+            if (socket == null)
                 throw new InvalidOperationException("Socket is not connected.");
             
             var totalReceivedBytes = 0;
@@ -133,7 +103,7 @@ namespace iMobileDevice.Unity
                     throw new TaskCanceledException();
 
                 var receivedBytes = 
-                    _socket.Receive(buffer, totalReceivedBytes, length - totalReceivedBytes, SocketFlags.None);
+                    socket.Receive(buffer, totalReceivedBytes, length - totalReceivedBytes, SocketFlags.None);
                 if (receivedBytes == 0)
                     break;
 
@@ -145,8 +115,11 @@ namespace iMobileDevice.Unity
 
         public void Dispose()
         {
-            _socket?.Close();
+            socket?.Close();
+            socket = null;
+            
             _serverSocket?.Close();
+            _serverSocket = null;
         }
     }
 }
