@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +21,6 @@ namespace iMobileDevice.Unity
         /// </summary>
         public IReadOnlyCollection<DeviceInfo> availableDevices => _availableDevices;
         
-        private iDeviceEventCallBack _deviceEventCallback;
         private GameObjectEventTrigger _gameObjectEventTrigger;
         private GCHandle _instanceHandle;
         
@@ -54,15 +53,15 @@ namespace iMobileDevice.Unity
             _gameObjectEventTrigger.updateCallback = Update;
             
             _instanceHandle = GCHandle.Alloc(this);
-            _deviceEventCallback = GetDeviceEventCallback();
-
+            
             try
             {
                 LibiMobileDevice.Instance.iDevice.idevice_event_subscribe(
-                        _deviceEventCallback, GCHandle.ToIntPtr(_instanceHandle)).ThrowOnError();
+                        StaticDeviceEventCallback, GCHandle.ToIntPtr(_instanceHandle)).ThrowOnError();
             }
             catch (Exception)
             {
+                _instanceHandle.Free();
                 UnityEngine.Object.Destroy(_gameObjectEventTrigger.gameObject);
                 _gameObjectEventTrigger = null;
                 throw;
@@ -75,9 +74,10 @@ namespace iMobileDevice.Unity
         {
             if (!isEnabled)
                 return;
-
-            _instanceHandle.Free();
-            _deviceEventCallback = null;
+            
+            if (_instanceHandle.IsAllocated)
+                _instanceHandle.Free();
+            
             isEnabled = false;
             
             if (_gameObjectEventTrigger != null)
@@ -88,7 +88,25 @@ namespace iMobileDevice.Unity
 
             LibiMobileDevice.Instance.iDevice.idevice_event_unsubscribe().ThrowOnError();
         }
-
+        
+        [AOT.MonoPInvokeCallback(typeof(iDeviceEventCallBack))]
+        private static void StaticDeviceEventCallback(ref iDeviceEvent deviceEvent, IntPtr data)
+        {
+            if (data == IntPtr.Zero)
+                return;
+                
+            try
+            {
+                var instanceHandle = GCHandle.FromIntPtr(data);
+                var deviceWatcher = instanceHandle.Target as DeviceWatcher;
+                deviceWatcher?.OnDeviceEvent(deviceEvent);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error in device event callback: {e}");
+            }
+        }
+        
         private void Update()
         {
             while (_pendingEvents.TryDequeue(out var deviceEvent))
@@ -137,16 +155,6 @@ namespace iMobileDevice.Unity
                 eventType = eventType,
                 connectionType = connectionType
             });
-        }
-
-        private static iDeviceEventCallBack GetDeviceEventCallback()
-        {
-            return (ref iDeviceEvent deviceEvent, IntPtr data) =>
-            {
-                var instanceHandle = GCHandle.FromIntPtr(data);
-                var deviceWatcher = instanceHandle.Target as DeviceWatcher;
-                deviceWatcher?.OnDeviceEvent(deviceEvent);
-            };
         }
 
         private static bool PopulateDeviceName(ref DeviceInfo deviceInfo)
