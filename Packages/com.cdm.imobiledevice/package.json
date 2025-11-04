@@ -1,7 +1,7 @@
 {
   "name": "com.cdm.imobiledevice",
   "displayName": "iMobileDevice.Unity",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "unity": "2020.3",
   "description": "A Unity package for communicating with iOS over USB.",
   "keywords": [
